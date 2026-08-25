@@ -14,10 +14,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Java 17
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v5
         with:
           distribution: 'zulu'
           java-version: '17'
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -31,7 +36,7 @@ jobs:
 
       - name: Build Android APK
         run: |
-          flet build apk --verbose
+          flet build apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
