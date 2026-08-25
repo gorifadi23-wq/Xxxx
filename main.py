@@ -27,20 +27,23 @@ def main(page: ft.Page):
             page.update()
             
             try:
-                # القراءة المباشرة من مسار الملف أو عبر البايتات لتفادي قيود الصلاحيات على أندرويد
+                # القراءة المباشرة من مسار الملف
                 if selected_file.path:
                     df_data = pd.read_excel(selected_file.path)
                 else:
-                    # في بعض إصدارات الأندرويد يتم جلب الملف كـ Stream
-                    with open(selected_file.path, 'rb') as f:
-                        df_data = pd.read_excel(io.BytesIO(f.read()))
+                    status_text.value = "خطأ: لم يتمكن من الوصول إلى مسار الملف"
+                    status_text.color = ft.colors.RED_700
+                    page.update()
+                    return
 
                 search_input.disabled = False
                 status_text.value = f"تم تحميل الملف بنجاح! عدد الصفوف: {len(df_data)}"
                 status_text.color = ft.colors.GREEN_700
+                results_list.controls.clear()
             except Exception as ex:
                 status_text.value = f"حدث خطأ أثناء قراءة الملف: {str(ex)}"
                 status_text.color = ft.colors.RED_700
+                search_input.disabled = True
             
             page.update()
 
@@ -51,12 +54,17 @@ def main(page: ft.Page):
     # دالة البحث في كامل جدول البيانات
     def search_data(e):
         if df_data is None or not search_input.value:
+            results_list.controls.clear()
+            results_list.controls.append(
+                ft.Text("أدخل كلمة للبحث", color=ft.colors.GREY_700)
+            )
+            page.update()
             return
         
         query = search_input.value.strip().lower()
         
         # تصفية كافة الصفوف التي تحتوي على كلمة البحث في أي عمود
-        mask = df_data.astype(str).apply(lambda row: row.str.lower().str.contains(query).any(), axis=1)
+        mask = df_data.astype(str).apply(lambda row: row.str.contains(query, case=False, na=False).any(), axis=1)
         filtered_df = df_data[mask]
         
         results_list.controls.clear()
@@ -68,7 +76,11 @@ def main(page: ft.Page):
         else:
             for index, row in filtered_df.iterrows():
                 # تجميع بيانات الصف في نص واصل
-                row_items = [f"**{col}**: {val}" for col, val in row.items() if pd.notna(val)]
+                row_items = []
+                for col, val in row.items():
+                    if pd.notna(val):
+                        row_items.append(f"**{col}**: {val}")
+                
                 row_str = " | ".join(row_items)
                 
                 results_list.controls.append(
