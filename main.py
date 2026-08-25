@@ -2,6 +2,12 @@ import flet as ft
 import pandas as pd
 import io
 
+# Compatibility fallback: some tools or older code may access `flet.colors` (lowercase).
+# The installed `flet` module exposes `Colors` (capitalized). Create a safe alias so
+# both `ft.Colors` and `ft.colors` work and avoid AttributeError at runtime.
+if not hasattr(ft, "colors") and hasattr(ft, "Colors"):
+    ft.colors = ft.Colors
+
 def main(page: ft.Page):
     page.title = "قارئ ومحرك بحث Excel"
     page.rtl = True
@@ -18,7 +24,7 @@ def main(page: ft.Page):
     results_list = ft.ListView(expand=True, spacing=10)
     status_text = ft.Text("يرجى اختيار ملف Excel من الهاتف للبدء", color=ft.Colors.GREY_700)
 
-    # دالة التعامل مع استرجاع الملف من مستعرض ملفات الهاتف
+    # دالة التعامل مع استرجاع الملف من مستعرض ملفات ا��هاتف
     def on_file_picked(e: ft.FilePickerResultEvent):
         nonlocal df_data
         if e.files and len(e.files) > 0:
